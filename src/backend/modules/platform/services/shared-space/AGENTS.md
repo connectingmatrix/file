@@ -1,0 +1,179 @@
+# AGENTS.md
+
+## Directory Context
+
+- Path: `packages/apps/general/src/services/shared-space`
+- This folder owns the production code files in this folder.
+
+## Contract
+
+- Keep all code in this folder aligned with its layer package boundary.
+- If any production code file in this folder is updated, update this AGENTS.md in the same change.
+- This AGENTS file must document each owned file purpose, input/output shape, role rules, logic gates, functions, exports, and line snippets.
+
+## File Usage Specification
+
+### `constants.ts`
+- Purpose: Defines module behavior owned by this usage folder.
+- Owning use cases: Runtime and application flows that import this file through package boundaries.
+- Input shape: Typed arguments and imported contracts declared in this file signatures.
+- Output shape: Typed return values, thrown errors, and exported contracts declared in this file.
+- Role interaction rules:
+  - `User`: Allowed through explicit service/resolver authorization and scoped data access only.
+  - `Root User`: Can execute elevated flows where caller context resolves root privileges.
+  - `Super Admin`: Can execute organization-level privileged flows where membership and role gates pass.
+- Logic gates summary:
+  - Authorization and scope checks must run before read/write side effects.
+  - Entity/ORM boundaries must remain the source of persisted data access.
+  - MCP or GraphQL proxy boundaries must avoid duplicated domain validation.
+- Functions (all):
+  - `platformRoot` (L7-L7, arrow)
+  - `SHARED_SPACE_ROOT` (L15-L15, arrow)
+  - `SHARED_SPACE_OS_QUOTA_ENFORCED` (L16-L16, arrow)
+- Exports:
+  - `SHARED_SPACE_ROOT` (L15)
+  - `SHARED_SPACE_OS_QUOTA_ENFORCED` (L16)
+- Key snippets and use-case mapping:
+  - `L7-L7`: Implements `platformRoot` for this module use case.
+  - `L15-L15`: Implements `SHARED_SPACE_ROOT` for this module use case.
+  - `L16-L16`: Implements `SHARED_SPACE_OS_QUOTA_ENFORCED` for this module use case.
+### `file-ops.ts`
+- Purpose: Defines module behavior owned by this usage folder.
+- Owning use cases: Runtime and application flows that import this file through package boundaries.
+- Input shape: Typed arguments and imported contracts declared in this file signatures.
+- Output shape: Typed return values, thrown errors, and exported contracts declared in this file.
+- Role interaction rules:
+  - `User`: Allowed through explicit service/resolver authorization and scoped data access only.
+  - `Root User`: Can execute elevated flows where caller context resolves root privileges.
+  - `Super Admin`: Can execute organization-level privileged flows where membership and role gates pass.
+- Logic gates summary:
+  - Authorization and scope checks must run before read/write side effects.
+  - Entity/ORM boundaries must remain the source of persisted data access.
+  - MCP or GraphQL proxy boundaries must avoid duplicated domain validation.
+- Functions (all):
+  - `assertWritable` (L9-L9, arrow)
+  - `assertFileName` (L13-L13, arrow)
+  - `assertNoSymlinkPath` (L17-L17, arrow)
+  - `assertNoHardlink` (L25-L25, arrow)
+  - `fileSha256` (L29-L29, arrow)
+  - `statFile` (L38-L38, arrow)
+  - `makeFolder` (L55-L55, arrow)
+  - `removePath` (L62-L62, arrow)
+  - `movePath` (L80-L80, arrow)
+  - `copyPath` (L101-L101, arrow)
+  - `writeText` (L124-L124, arrow)
+  - `writeBuffer` (L140-L140, arrow)
+  - `download` (L156-L156, arrow)
+  - `transform` (L167-L167, method)
+- Exports:
+  - `assertWritable` (L9)
+  - `assertFileName` (L13)
+  - `fileSha256` (L29)
+  - `statFile` (L38)
+  - `makeFolder` (L55)
+  - `removePath` (L62)
+  - `movePath` (L80)
+  - `copyPath` (L101)
+  - `writeText` (L124)
+  - `writeBuffer` (L140)
+  - `download` (L156)
+- Key snippets and use-case mapping:
+  - `L9-L9`: Implements `assertWritable` for this module use case.
+  - `L13-L13`: Implements `assertFileName` for this module use case.
+  - `L17-L17`: Implements `assertNoSymlinkPath` for this module use case.
+  - `L25-L25`: Implements `assertNoHardlink` for this module use case.
+  - `L29-L29`: Implements `fileSha256` for this module use case.
+  - `L38-L38`: Implements `statFile` for this module use case.
+  - `L55-L55`: Implements `makeFolder` for this module use case.
+  - `L62-L62`: Implements `removePath` for this module use case.
+  - `L80-L80`: Implements `movePath` for this module use case.
+  - `L101-L101`: Implements `copyPath` for this module use case.
+  - `L124-L124`: Implements `writeText` for this module use case.
+  - `L140-L140`: Implements `writeBuffer` for this module use case.
+  - `L156-L156`: Implements `download` for this module use case.
+  - `L167-L167`: Implements `transform` for this module use case.
+### `path.ts`
+- Purpose: Defines module behavior owned by this usage folder.
+- Owning use cases: Runtime and application flows that import this file through package boundaries.
+- Input shape: Typed arguments and imported contracts declared in this file signatures.
+- Output shape: Typed return values, thrown errors, and exported contracts declared in this file.
+- Role interaction rules:
+  - `User`: Allowed through explicit service/resolver authorization and scoped data access only.
+  - `Root User`: Can execute elevated flows where caller context resolves root privileges.
+  - `Super Admin`: Can execute organization-level privileged flows where membership and role gates pass.
+- Logic gates summary:
+  - Authorization and scope checks must run before read/write side effects.
+  - Entity/ORM boundaries must remain the source of persisted data access.
+  - MCP or GraphQL proxy boundaries must avoid duplicated domain validation.
+- Functions (all):
+  - `cleanOrg` (L5-L5, arrow)
+  - `orgRoot` (L7-L7, arrow)
+  - `drivePath` (L13-L13, arrow)
+  - `hostPath` (L25-L25, arrow)
+  - `blockedName` (L33-L33, arrow)
+  - `publicPath` (L34-L34, arrow)
+- Exports:
+  - `orgRoot` (L7)
+  - `drivePath` (L13)
+  - `hostPath` (L25)
+  - `blockedName` (L33)
+  - `publicPath` (L34)
+- Key snippets and use-case mapping:
+  - `L5-L5`: Implements `cleanOrg` for this module use case.
+  - `L7-L7`: Implements `orgRoot` for this module use case.
+  - `L13-L13`: Implements `drivePath` for this module use case.
+  - `L25-L25`: Implements `hostPath` for this module use case.
+  - `L33-L33`: Implements `blockedName` for this module use case.
+  - `L34-L34`: Implements `publicPath` for this module use case.
+### `usage.ts`
+- Purpose: Defines module behavior owned by this usage folder.
+- Owning use cases: Runtime and application flows that import this file through package boundaries.
+- Input shape: Typed arguments and imported contracts declared in this file signatures.
+- Output shape: Typed return values, thrown errors, and exported contracts declared in this file.
+- Role interaction rules:
+  - `User`: Allowed through explicit service/resolver authorization and scoped data access only.
+  - `Root User`: Can execute elevated flows where caller context resolves root privileges.
+  - `Super Admin`: Can execute organization-level privileged flows where membership and role gates pass.
+- Logic gates summary:
+  - Authorization and scope checks must run before read/write side effects.
+  - Entity/ORM boundaries must remain the source of persisted data access.
+  - MCP or GraphQL proxy boundaries must avoid duplicated domain validation.
+- Functions (all):
+  - `listFolder` (L12-L12, arrow)
+- Exports:
+  - `listFolder` (L12)
+- Key snippets and use-case mapping:
+  - `L12-L12`: Implements `listFolder` for this module use case.
+
+## Non-Negotiable Coding Standards
+
+- Never ever write supabase.from we have entities always load data through it
+- Do not use `supabase.from` or `input.from` directly. Load data through entities and the ORM.
+- Do not add autofills
+- Do not add placeholder, do not add normalisation.
+- Find and fix the root cause instead of adding the fallback.
+- Do not add fallbacks. Fix the logic.
+- Everything should be typed dont use unknown, never, any
+- Do not use JS-style safe/coercion helper functions.
+- Do not use `to*` functions like `toPayload`.
+- Do not create map functions.
+- Do not check types like `type === Array` or `type === string`.
+- Use the `||` operator for comparison.
+- Do not write a code file bigger than 70-100 lines.
+- Try to generalise multiple lines of code into fewer lines.
+- After writing code, recheck patterns across the workspace to remove duplications.
+- Do not invent functionality. Ask the user if it already exists somewhere.
+- Prefer the smallest correct change over broad refactors.
+- Preserve the repo's existing style, structure, and package manager.
+- Avoid destructive git commands unless explicitly requested.
+- Keep memory entries concise, factual, and tied to the files or behavior that changed.
+- Entity table name should come from the Entity and not direct usage.
+- Function naming should be .create, .delete .find .update .find .findBy .deleteBy
+- Disallowed naming conventions are createRows, listRows and any programatic name for the entity.
+- Importing supabase in the entities is disallowed. Upgrade the ORM file is something is not supported by entity. Orm is present at @gigav2/orm
+- If Create, Update, Delete, Find is unable to do any thing stop the coding and inform the user of your updates first.
+- Do not create proxy or additional functions for create, update, delete
+- Keep ORM generic do not add Entity functions in the ORM
+- MCP.ts will execute inner graphql for the operations they will not implement any
+- JSON is disallowed in the Graphql Schema use proper types only
+- Dont use zod for typing

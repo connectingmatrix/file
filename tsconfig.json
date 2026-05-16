@@ -19,6 +19,11 @@
   ],
   "exclude": [
     "dist",
-    "node_modules"
+    "node_modules",
+    "vendor/**/*",
+    "src/backend/modules/**/*",
+    "src/ui/dataloaders/**/*",
+    "src/ui/components/**/*",
+    "src/entity/entities/**/*"
   ]
 }
