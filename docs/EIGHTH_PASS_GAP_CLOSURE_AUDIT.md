@@ -88,7 +88,7 @@ Project debug chat remains browser-context-only. Debug events can be sent to the
 
 ### 6. Workflow AI and preserved workflow package bridge
 
-`@connectingmatrix/workflows` now owns:
+`@connectingmatrix/workflow-driver` now owns:
 
 - workflow AI sessions
 - `buildWithAI(...)`
@@ -104,7 +104,7 @@ Dragging a `.node` into a workflow routes through `Workflows.importNodePackageTo
 
 ### 7. Giga agents fixed and bound to domains
 
-`@connectingmatrix/giga-agents` now owns only the Giga domain designer agents:
+`@connectingmatrix/agents` now owns only the Giga domain designer agents:
 
 ```text
 src/backend/agents/workflow-designer-agent

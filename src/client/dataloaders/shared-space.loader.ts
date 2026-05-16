@@ -7,8 +7,8 @@ import {
     organizationSharedSpaceWriteFile,
     type OrganizationSharedSpaceFile,
     type OrganizationSharedSpaceSummary
-} from '@/orm/shared-space';
-import type { UiDataContext } from '@/dataloaders/context';
+} from '@giga/dataloader/client/legacy/orm/shared-space';
+import type { UiDataContext } from '@giga/dataloader/client/legacy/dataloaders/context';
 
 export type OrganizationDriveState = {
     summary: OrganizationSharedSpaceSummary;
