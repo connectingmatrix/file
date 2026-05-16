@@ -4,7 +4,7 @@ All file processing, MIME detection, ZIP compression/extraction, Supabase/memory
 
 ## Ownership
 
-This package owns its `src/ui`, `src/backend`, `src/entity`, GraphQL bundle, migrations, health/status, launcher, and package contracts. It can be included in backend or UI without assuming a monorepo.
+This package owns its `src/client`, `src/backend`, `src/entity`, GraphQL bundle, migrations, health/status, launcher, and package contracts. It can be included in backend or UI without assuming a monorepo.
 
 ## Public contracts
 
@@ -70,7 +70,7 @@ GraphQL namespace and routes are returned by `createPackage()`. Routes include h
 
 ## Folder counts
 
-- `src/ui`: 5 files
+- `src/client`: 5 files
 - `src/backend`: 22 files
 - `src/entity`: 6 files
 - `migrations`: 3 files
