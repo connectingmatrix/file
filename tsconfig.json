@@ -1,35 +1,123 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "declaration": true,
-    "outDir": "dist",
-    "rootDir": "src",
-    "strict": false,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
+    "target": "es2018",
+    "module": "commonjs",
+    "moduleResolution": "node",
     "experimentalDecorators": true,
-    "useDefineForClassFields": false,
-    "noImplicitAny": false
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "baseUrl": "./src",
+    "paths": {
+      "@connectingmatrix/orm": [
+        "../../giga-orm/src/index"
+      ],
+      "@connectingmatrix/orm/*": [
+        "../../giga-orm/src/*"
+      ],
+      "@connectingmatrix/agents": [
+        "../../giga-agents/src/index"
+      ],
+      "@connectingmatrix/agents/*": [
+        "../../giga-agents/src/*"
+      ],
+      "@connectingmatrix/project": [
+        "../../giga-project/src/index"
+      ],
+      "@connectingmatrix/project/*": [
+        "../../giga-project/src/*"
+      ],
+      "@connectingmatrix/file-service": [
+        "../../giga-file-service/src/index"
+      ],
+      "@connectingmatrix/file-service/*": [
+        "../../giga-file-service/src/*"
+      ],
+      "@gigav2/services/agent/files/*": [
+        "../../giga-file-service/src/agent-files/*"
+      ],
+      "@gigav2/services/agent/files": [
+        "../../giga-file-service/src/agent-files/index"
+      ],
+      "@gigav2/services/agent/*": [
+        "../../giga-agents/src/services/agent/*"
+      ],
+      "@gigav2/services/agent": [
+        "../../giga-agents/src/services/agent/index"
+      ],
+      "@gigav2/services/ai-agents/*": [
+        "../../giga-agents/src/services/ai-agents/*"
+      ],
+      "@gigav2/services/ai-agents": [
+        "../../giga-agents/src/services/ai-agents/index"
+      ],
+      "@gigav2/services/chat/*": [
+        "../../giga-agents/src/services/chat/*"
+      ],
+      "@gigav2/services/chat": [
+        "../../giga-agents/src/services/chat/index"
+      ],
+      "@gigav2/socket/chat/*": [
+        "../../giga-agents/src/socket/chat/*"
+      ],
+      "@gigav2/socket/chat": [
+        "../../giga-agents/src/socket/chat/index"
+      ],
+      "@gigav2/socket/core/*": [
+        "../../giga-agents/src/socket/core/*"
+      ],
+      "@gigav2/socket/core": [
+        "../../giga-agents/src/socket/core/index"
+      ],
+      "@gigav2/services/post/*": [
+        "../../giga-file-service/src/services/post/*"
+      ],
+      "@gigav2/services/post": [
+        "../../giga-file-service/src/services/post/index"
+      ],
+      "@gigav2/services/shared-space/*": [
+        "../../giga-file-service/src/services/shared-space/*"
+      ],
+      "@gigav2/services/shared-space": [
+        "../../giga-file-service/src/services/shared-space/index"
+      ],
+      "@gigav2/services/giga/tree/*": [
+        "../../giga-project/src/tree/*"
+      ],
+      "@gigav2/services/giga/tree": [
+        "../../giga-project/src/tree/index"
+      ],
+      "@gigav2/services/shared/*": [
+        "../../giga-project/src/shared/*"
+      ],
+      "@gigav2/services/shared": [
+        "../../giga-project/src/shared/index"
+      ],
+      "@gigav2/services/common/*": [
+        "../../giga-project/src/common/*"
+      ],
+      "@gigav2/services/common": [
+        "../../giga-project/src/common/index"
+      ],
+      "@gigav2/*": [
+        "../../giga-ai-backend/src/*"
+      ],
+      "@workflow/nodes/*": [
+        "../../workflow-nodes/src/*"
+      ],
+      "@workflow/executor": [
+        "../../giga-wf-executor/src/index"
+      ]
+    }
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-    "src/types/**/*.d.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
-    "dist",
     "node_modules",
-    "vendor/**/*",
-    "src/backend/modules/**/*",
-    "src/client/dataloaders/**/*",
-    "src/client/components/**/*",
-    "src/entity/entities/**/*",
-    "src/client/screens/**/*",
-    "src/client/designer/**/*",
-    "src/client/shell/**/*",
-    "src/playground-ui/**/*"
+    "dist"
   ]
 }
