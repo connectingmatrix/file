@@ -12,7 +12,8 @@
     "mammoth": "^1.11.0",
     "exceljs": "^4.4.0",
     "multer": "^2.0.1",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "giga-ai-helper": "git+https://github.com/connectingmatrix/ai-helper.git#main"
   },
   "exports": {
     ".": "./src/index.ts",
@@ -30,5 +31,8 @@
     "./storage": "./src/storage/index.ts",
     "./drive": "./src/drive/index.ts",
     "./ingestion": "./src/ingestion/index.ts"
+  },
+  "scripts": {
+    "lint:contracts": "node scripts/check-package-contracts.mjs"
   }
 }
