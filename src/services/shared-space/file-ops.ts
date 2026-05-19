@@ -26,6 +26,13 @@ const assertNoHardlink = (stat: ReturnType<typeof lstatSync>) => {
   if (!stat.isDirectory() && stat.nlink > 1) throw new BadRequestError('Hard links are not allowed in shared space.');
 };
 
+const assertProtectedAgentFolder = (inputPath: string, stat: ReturnType<typeof lstatSync>) => {
+  const normalized = inputPath.replace(/\\/g, '/').replace(/^\/drive\/?/, '/');
+  if (stat.isDirectory() && /^\/ai-agents\/[^/]+\/files\/?$/.test(normalized)) {
+    throw new BadRequestError('AI Agent Drive file folder is protected and cannot be deleted. Remove individual files from agent memory instead.');
+  }
+};
+
 export const fileSha256 = async (path: string) =>
   await new Promise<string>((resolve, reject) => {
     const hash = createHash('sha256');
@@ -66,6 +73,7 @@ export const removePath = (root: string, inputPath: string) => {
   if (lstatSync(path).isSymbolicLink()) throw new BadRequestError('Symbolic links are not allowed in shared space.');
   const stat = lstatSync(path);
   assertNoHardlink(stat);
+  assertProtectedAgentFolder(inputPath, stat);
   rmSync(path, { recursive: true, force: true });
   return {
     name: basename(path),

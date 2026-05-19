@@ -14,6 +14,10 @@ export type AIAgentAttachmentRow = {
   byte_size?: number | null;
   ingestion_status?: string | null;
   ingestion_metadata?: Record<string, unknown> | null;
+  drive_file?: Record<string, unknown> | null;
+  folder_protected?: boolean | null;
+  ingestion_modes?: string[] | null;
+  updated_at?: string | null;
   created_by?: string | null;
   created_at?: string | null;
 };
@@ -52,6 +56,14 @@ export class AIAgentAttachmentEntity extends Entity<AIAgentAttachmentRow> {
   @FIELD({ type: 'string' }) public declare ingestion_status: string | null;
 
   @FIELD({ type: 'object', default: {} }) public declare ingestion_metadata: Record<string, unknown> | null;
+
+  @FIELD({ type: 'object', default: {} }) public declare drive_file: Record<string, unknown> | null;
+
+  @FIELD({ type: 'boolean', default: false }) public declare folder_protected: boolean | null;
+
+  @FIELD({ type: 'array', default: [] }) public declare ingestion_modes: string[] | null;
+
+  @FIELD({ type: 'string' }) public declare updated_at: string | null;
 
   @FIELD({ type: 'string' }) public declare created_by: string | null;
 
