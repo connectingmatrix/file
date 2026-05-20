@@ -19,7 +19,7 @@ type FileServiceRootResolverRegistration = {
 };
 
 type FileServiceRootRegistrar = {
-  registerRootResolvers(registrations: readonly FileServiceRootResolverRegistration[]): FileServiceRootResolverRegistration[];
+  registerRootResolvers(registrations: readonly FileServiceRootResolverRegistration[]): void;
 };
 
 const objectValue = (value: AgentFileJsonValue | null | undefined): AgentFileJsonObject =>
