@@ -5,7 +5,8 @@ import { tmpdir } from 'node:os';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { parseNumberValue, parseRecordValue, parseStringValue } from 'giga-ai-helper/workflow';
-import { AttachmentEntity, OrganisationEntity } from '@connectingmatrix/orm/entities';
+import { AttachmentEntity } from '@connectingmatrix/orm/entities';
+import { SharedSpaceEntity } from '../../shared-space';
 import { isCurrentUserRootUser } from '@gigav2/lib/helper';
 import { assertFileName, assertWritable } from '@gigav2/services/shared-space/file-ops';
 import { hostPath } from '@gigav2/services/shared-space/path';
@@ -71,7 +72,7 @@ const graphContext = async (context: Parameters<WorkflowNodeHandler>[0]) =>
 const workflowOrganizationId = (context: Parameters<WorkflowNodeHandler>[0]) =>
   parseStringValue(context.workflow.metadata.organizationId || parseRecordValue(context.workflow.metadata.scope).organizationId).trim();
 
-const sharedSpace = (organizationId: string) => (OrganisationEntity.load(organizationId) as OrganisationEntity).sharedSpace;
+const sharedSpace = (organizationId: string) => SharedSpaceEntity.forOrganisation(organizationId);
 
 const copySource = async (source: string, target: string, allowLocalFile: boolean) => {
   if (source.startsWith('http://') || source.startsWith('https://')) {
