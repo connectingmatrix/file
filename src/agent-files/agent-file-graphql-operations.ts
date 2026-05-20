@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { lstatSync, rmSync } from 'node:fs';
-import { Readable } from 'node:stream';
-import { writeAgentDriveFile } from './agent-drive-files';
+import { writeAgentDriveFile, writeAgentDriveFileStream } from './agent-drive-files';
 import { runAgentFileUploadIngestionHook } from './agent-file-ingestion-hooks';
 import { AIAgentAttachmentEntity, type AIAgentAttachmentRow } from '../entities/AIAgentAttachmentEntity';
 import type {
@@ -19,7 +18,8 @@ type UploadFileDetail = {
   fileName: string;
   mimeType: string;
   sizeBytes: number;
-  body: Buffer;
+  body?: Buffer;
+  stream?: NodeJS.ReadableStream;
 };
 
 const emptyPayload = (agentId: string | null, status: string, message: string): AgentFileOperationPayload => ({
@@ -93,12 +93,6 @@ const uploadList = (files: AgentFileGraphqlUploadSlot[] | AgentFileGraphqlUpload
   return Array.isArray(files) ? files : [files];
 };
 
-async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream as AsyncIterable<Buffer | Uint8Array | string>) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  return Buffer.concat(chunks);
-}
-
 async function readUpload(slot: AgentFileGraphqlUploadSlot): Promise<UploadFileDetail> {
   const file: AgentFileGraphqlUpload = await slot;
   const fileName = textValue(file.filename || file.name) || `agent-file-${randomUUID()}`;
@@ -112,12 +106,10 @@ async function readUpload(slot: AgentFileGraphqlUploadSlot): Promise<UploadFileD
     return { fileName, mimeType, sizeBytes: Number(file.size || body.byteLength), body };
   }
   if (file.createReadStream) {
-    const body = await streamToBuffer(file.createReadStream());
-    return { fileName, mimeType, sizeBytes: Number(file.size || body.byteLength), body };
+    return { fileName, mimeType, sizeBytes: Number(file.size || 0), stream: file.createReadStream() };
   }
   if (file.stream) {
-    const body = await streamToBuffer(file.stream());
-    return { fileName, mimeType, sizeBytes: Number(file.size || body.byteLength), body };
+    return { fileName, mimeType, sizeBytes: Number(file.size || 0), stream: file.stream() };
   }
   throw new Error(`Unable to read upload ${fileName}.`);
 }
@@ -167,14 +159,24 @@ export async function uploadAiAgentFilesOperation(
     const upload = await readUpload(slots[index]);
     const selectedModes = fileModesAt(input, index, modes);
     const attachmentId = textValue(input.replaceAttachmentId || input.attachmentId || input.attachment_id) || randomUUID();
-    const driveFile = await writeAgentDriveFile({
-      scope: { userId: ownerUserId, organizationId },
-      agentId: storageAgentId,
-      fileName: upload.fileName,
-      mimeType: upload.mimeType,
-      body: upload.body,
-      replaceAttachmentId: attachmentId,
-    });
+    const driveFile = upload.stream
+      ? await writeAgentDriveFileStream({
+          scope: { userId: ownerUserId, organizationId },
+          agentId: storageAgentId,
+          fileName: upload.fileName,
+          mimeType: upload.mimeType,
+          stream: upload.stream,
+          replaceAttachmentId: attachmentId,
+          declaredSizeBytes: upload.sizeBytes || null,
+        })
+      : await writeAgentDriveFile({
+          scope: { userId: ownerUserId, organizationId },
+          agentId: storageAgentId,
+          fileName: upload.fileName,
+          mimeType: upload.mimeType,
+          body: upload.body || Buffer.alloc(0),
+          replaceAttachmentId: attachmentId,
+        });
     const storageBucket = driveFile.scopeKind === 'organization' ? 'organization-drive' : 'user-drive';
     await AIAgentAttachmentEntity.create({
       id: attachmentId,

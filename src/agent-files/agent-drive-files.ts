@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { existsSync, mkdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { createWriteStream, existsSync, lstatSync, mkdirSync } from 'node:fs';
 import { basename, dirname, join, resolve, sep } from 'node:path';
+import { Transform } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import { BadRequestError } from 'routing-controllers';
 import { SHARED_SPACE_ROOT } from '../services/shared-space/constants';
 import { writeBuffer, statFile } from '../services/shared-space/file-ops';
@@ -84,6 +87,55 @@ export async function writeAgentDriveFile(input: {
     mimeType: input.mimeType || 'application/octet-stream',
     sizeBytes: input.body.byteLength,
     checksum: detail.checksum || null,
+    storageProvider: 'drive',
+  };
+}
+
+export async function writeAgentDriveFileStream(input: {
+  scope: AgentDriveScope;
+  agentId: string;
+  fileName: string;
+  mimeType?: string | null;
+  stream: NodeJS.ReadableStream;
+  replaceAttachmentId?: string | null;
+  declaredSizeBytes?: number | null;
+}): Promise<AgentDriveFileObject> {
+  if (!input.agentId) throw new BadRequestError('agentId is required.');
+  if (!input.scope.userId && !input.scope.organizationId) throw new BadRequestError('A user or organization scope is required for AI Agent Drive upload.');
+  const folder = agentDriveFolder(input.scope, input.agentId);
+  const id = input.replaceAttachmentId || randomUUID();
+  const fileName = `${id}-${safeFileName(input.fileName)}`;
+  const drivePath = `${folder.folderPath}/${fileName}`;
+  const target = resolve(join(folder.folderHostPath, fileName));
+  const base = resolve(folder.root);
+  if (target !== base && !target.startsWith(`${base}${sep}`)) throw new BadRequestError('Agent Drive file escaped the mounted drive.');
+  mkdirSync(dirname(target), { recursive: true, mode: 0o700 });
+
+  const hash = createHash('sha256');
+  let sizeBytes = 0;
+  const checksum = new Transform({
+    transform(chunk: Buffer, _encoding, callback) {
+      sizeBytes += chunk.byteLength;
+      hash.update(chunk);
+      callback(null, chunk);
+    },
+  });
+  await pipeline(input.stream, checksum, createWriteStream(target, { mode: 0o600 }));
+  const stat = lstatSync(target);
+  return {
+    id,
+    scopeKind: folder.scopeKind,
+    scopeId: folder.scopeId,
+    agentId: input.agentId,
+    folderPath: folder.folderPath,
+    folderHostPath: folder.folderHostPath,
+    folderDeletable: false,
+    drivePath: publicPath(folder.root, target),
+    hostPath: target,
+    fileName: safeFileName(input.fileName),
+    mimeType: input.mimeType || 'application/octet-stream',
+    sizeBytes: input.declaredSizeBytes || sizeBytes || stat.size,
+    checksum: hash.digest('hex'),
     storageProvider: 'drive',
   };
 }
