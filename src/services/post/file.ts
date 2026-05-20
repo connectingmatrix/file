@@ -3,7 +3,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { isEmpty } from 'lodash';
 import { DEFAULT_MIME_EXTENSION_MAP, extractTextFromFile, getExtensionFromMimeType, normalizeBucketPathPrefix } from 'giga-ai-helper';
 import { AI_POST_ATTACHMENT_BUCKET, AI_POST_ATTACHMENT_BUCKET_PATH } from '@gigav2/lib/constant';
-import { AttachmentEntity } from '@gigav2/repositories/entities';
+import { AttachmentEntity } from '@connectingmatrix/orm/entities';
 import type { AttachmentInsertPayload, ManagePostAttachmentsParams } from '@gigav2/types/post.types';
 
 export type PreparedPostAttachment = {

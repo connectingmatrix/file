@@ -1,4 +1,4 @@
-import { uploadAiAgentFilesOperation, deleteAiAgentFileOperation } from './agent-file-graphql-operations';
+import { deleteAiAgentFileOperation } from './agent-file-graphql-operations';
 import type { AgentFileJsonObject, AgentFileJsonValue, AgentFileOperationArgs, AgentFileOperationPayload, AgentFileResolverContext } from './graphql-types';
 
 type GraphqlField = 'String' | 'ID' | 'Boolean' | { of: 'String' | 'ID'; list: true };
@@ -50,13 +50,6 @@ export function registerFileServiceGraphqlOperations(orm: FileServiceRootRegistr
   if (registered) return;
   registered = true;
   orm.registerRootResolvers([
-    {
-      name: 'uploadAiAgentFiles',
-      operationType: 'mutation',
-      args: 'input: Opaque, files: [Upload!]!',
-      output: agentFilePayloadOutput,
-      resolverHandler: (_root, args, context) => uploadAiAgentFilesOperation(objectValue(args.input), args.files, context),
-    },
     {
       name: 'deleteAiAgentFile',
       operationType: 'mutation',

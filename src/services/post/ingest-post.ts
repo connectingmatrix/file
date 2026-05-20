@@ -1,5 +1,5 @@
 import { ingestSource } from '@gigav2/services/post/ingestion';
-import { Post } from '@gigav2/repositories/entities/tree/Post';
+import { Post } from '@connectingmatrix/orm/entities/tree/Post';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { IngestPostInput } from '@gigav2/types/post.types';
 

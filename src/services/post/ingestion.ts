@@ -2,8 +2,8 @@ import hash from 'object-hash';
 import { chunkText } from 'giga-ai-helper/chunking';
 import { createEmbeddings } from 'giga-ai-helper/embeddings';
 import { IngestSourceInput, IngestionResult } from '@gigav2/types/graphql.types';
-import { ChunkEntity } from '@gigav2/repositories/entities';
-import type { ChunkRow } from '@gigav2/repositories/entities/ChunkEntity';
+import { ChunkEntity } from '@connectingmatrix/orm/entities';
+import type { ChunkRow } from '@connectingmatrix/orm/entities/ChunkEntity';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 const INSERT_BATCH_SIZE = 100;

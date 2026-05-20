@@ -1,4 +1,3 @@
-export * from './entities';
 export * from './register';
 export * from './boot';
 export * from './services/post/file';

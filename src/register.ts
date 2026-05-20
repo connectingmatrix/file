@@ -1,14 +1,8 @@
-import { ORM, type EntityClass } from '@connectingmatrix/orm';
-import { fileServiceEntities } from './entities/registry';
+import { ORM, type OrmRootResolverRegistration } from '@connectingmatrix/orm';
 import { registerFileServiceGraphqlOperations } from './agent-files/register-graphql-operations';
 
-type RootRegistrar = Parameters<typeof registerFileServiceGraphqlOperations>[0];
-type OrmRegistrar = RootRegistrar & { registerEntity<TEntity extends EntityClass>(entity: TEntity): TEntity };
+type RootRegistrar = { registerRootResolver(registration: OrmRootResolverRegistration): OrmRootResolverRegistration };
 
-export function registerFileServicePackage(orm: OrmRegistrar = ORM as OrmRegistrar): EntityClass[] {
-  for (const entity of fileServiceEntities) orm.registerEntity(entity);
+export function registerFileServicePackage(orm: RootRegistrar = ORM): void {
   registerFileServiceGraphqlOperations(orm);
-  return [...fileServiceEntities];
 }
-
-export { fileServiceEntities };

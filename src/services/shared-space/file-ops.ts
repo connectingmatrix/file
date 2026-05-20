@@ -28,7 +28,7 @@ const assertNoHardlink = (stat: ReturnType<typeof lstatSync>) => {
 
 const assertProtectedAgentFolder = (inputPath: string, stat: ReturnType<typeof lstatSync>) => {
   const normalized = inputPath.replace(/\\/g, '/').replace(/^\/drive\/?/, '/');
-  if (stat.isDirectory() && /^\/ai-agents\/[^/]+\/files\/?$/.test(normalized)) {
+  if (stat.isDirectory() && /^\/[^/]+\/agents\/[^/]+\/(?:FILES|artifacts\/FILES)\/?$/.test(normalized)) {
     throw new BadRequestError('AI Agent Drive file folder is protected and cannot be deleted. Remove individual files from agent memory instead.');
   }
 };

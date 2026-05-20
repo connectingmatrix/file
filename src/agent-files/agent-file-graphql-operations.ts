@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { lstatSync, rmSync } from 'node:fs';
 import { writeAgentDriveFile, writeAgentDriveFileStream } from './agent-drive-files';
 import { runAgentFileUploadIngestionHook } from './agent-file-ingestion-hooks';
-import { AIAgentAttachmentEntity, type AIAgentAttachmentRow } from '../entities/AIAgentAttachmentEntity';
+import { AIAgentAttachmentEntity, type AIAgentAttachmentRow } from '@connectingmatrix/orm/entities/AIAgentAttachmentEntity';
 import type {
   AgentFileGraphqlUpload,
   AgentFileGraphqlUploadSlot,
@@ -134,7 +134,7 @@ function removeHostFile(row: AIAgentAttachmentRow): boolean {
   return true;
 }
 
-export async function uploadAiAgentFilesOperation(
+export async function uploadAgentFilesOperation(
   input: AgentFileJsonObject,
   files: AgentFileGraphqlUploadSlot[] | AgentFileGraphqlUploadSlot | null | undefined,
   context: AgentFileResolverContext = {},
@@ -142,10 +142,10 @@ export async function uploadAiAgentFilesOperation(
   const agentId = textValue(input.agentId || input.agent_id) || null;
   const draftId = textValue(input.draftId || input.draft_id);
   const storageAgentId = agentId || draftId;
-  if (!storageAgentId) throw new Error('uploadAiAgentFiles requires agentId or draftId.');
+  if (!storageAgentId) throw new Error('AI Agent file upload requires agentId or draftId.');
 
   const slots = uploadList(files);
-  if (!slots.length) throw new Error('uploadAiAgentFiles requires at least one file.');
+  if (!slots.length) throw new Error('AI Agent file upload requires at least one file.');
 
   const ownerUserId = contextUserId(context, input);
   const organizationId = contextOrganizationId(context, input);

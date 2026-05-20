@@ -19,8 +19,6 @@
     ".": "./src/index.ts",
     "./register": "./src/register.ts",
     "./boot": "./src/boot.ts",
-    "./entities": "./src/entities/index.ts",
-    "./entities/*": "./src/entities/*.ts",
     "./services/*": "./src/services/*",
     "./post": "./src/post/index.ts",
     "./post/*": "./src/post/*",

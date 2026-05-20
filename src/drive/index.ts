@@ -1,2 +1,1 @@
-export * from '../storage';
-export * from '../entities/SharedSpaceFileEntity';
+export * from '@connectingmatrix/orm/entities/SharedSpaceFileEntity';

@@ -1,5 +1,5 @@
 import { ingestSource } from '@gigav2/services/post/ingestion';
-import { AttachmentEntity, Post } from '@gigav2/repositories/entities';
+import { AttachmentEntity, Post } from '@connectingmatrix/orm/entities';
 import type { IngestAttachmentInput } from '@gigav2/types/post.types';
 
 export async function ingestAttachment(supabase: any, input: IngestAttachmentInput) {

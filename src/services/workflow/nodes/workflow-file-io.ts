@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { parseNumberValue, parseRecordValue, parseStringValue } from 'giga-ai-helper/workflow';
-import { AttachmentEntity, OrganisationEntity } from '@gigav2/repositories/entities';
+import { AttachmentEntity, OrganisationEntity } from '@connectingmatrix/orm/entities';
 import { isCurrentUserRootUser } from '@gigav2/lib/helper';
 import { assertFileName, assertWritable } from '@gigav2/services/shared-space/file-ops';
 import { hostPath } from '@gigav2/services/shared-space/path';

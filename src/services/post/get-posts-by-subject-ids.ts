@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Post } from '@gigav2/repositories/entities';
+import { Post } from '@connectingmatrix/orm/entities';
 
 export function getPostsBySubjectIds(_supabase: SupabaseClient, subjectIds: string[]) {
   if (!subjectIds?.length) {
