@@ -36,7 +36,7 @@ const safeFileName = (value: string) => clean(basename(value || 'agent-file')) |
 
 export function agentDriveRoot(scope: AgentDriveScope): { root: string; scopeKind: 'user' | 'organization'; scopeId: string } {
   const userId = clean(scope.userId || 'anonymous');
-  const root = resolve(SHARED_SPACE_ROOT());
+  const root = resolve(SHARED_SPACE_ROOT(), 'users', userId, 'drive');
   mkdirSync(root, { recursive: true, mode: 0o700 });
   return { root, scopeKind: 'user', scopeId: userId };
 }
@@ -80,7 +80,7 @@ export async function writeAgentDriveFile(input: {
   const target = resolve(hostPath);
   if (target !== base && !target.startsWith(`${base}${sep}`)) throw new BadRequestError('Agent Drive file escaped the mounted drive.');
   mkdirSync(dirname(target), { recursive: true, mode: 0o700 });
-  const stat = writeBuffer(folder.root, drivePath, input.body);
+  const stat = writeBuffer(folder.root, drivePath, input.body, { allowProtected: true });
   const detail = existsSync(hostPath) ? await statFile(folder.root, drivePath) : stat;
   return {
     id,
@@ -118,7 +118,7 @@ export async function writeAgentArtifactFile(input: {
   const target = resolve(hostPath);
   if (target !== base && !target.startsWith(`${base}${sep}`)) throw new BadRequestError('Agent artifact file escaped the mounted drive.');
   mkdirSync(dirname(target), { recursive: true, mode: 0o700 });
-  const stat = writeBuffer(folder.root, drivePath, input.body);
+  const stat = writeBuffer(folder.root, drivePath, input.body, { allowProtected: true });
   const detail = existsSync(hostPath) ? await statFile(folder.root, drivePath) : stat;
   return {
     id,

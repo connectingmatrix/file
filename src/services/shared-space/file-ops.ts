@@ -5,9 +5,10 @@ import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { BadRequestError } from 'routing-controllers';
 import { blockedName, hostPath, publicPath } from './path';
+import { assertUserDrivePathAllowed } from './policy';
 
 export const assertWritable = (limit: { quotaBytes: number; usedBytes: number }, bytes: number) => {
-  if (limit.usedBytes + bytes > limit.quotaBytes) throw new BadRequestError('Organization shared space quota exceeded.');
+  if (limit.usedBytes + bytes > limit.quotaBytes) throw new BadRequestError('Drive quota exceeded.');
 };
 
 export const assertFileName = (path: string) => {
@@ -66,7 +67,8 @@ export const makeFolder = (root: string, inputPath: string) => {
   return { name: basename(path), path: publicPath(root, path), kind: 'folder', size: 0, checksum: null, updatedAt: new Date().toISOString() };
 };
 
-export const removePath = (root: string, inputPath: string) => {
+export const removePath = (root: string, inputPath: string, options: { allowProtected?: boolean } = {}) => {
+  if (options.allowProtected !== true) assertUserDrivePathAllowed(inputPath);
   const path = hostPath(root, inputPath);
   if (!existsSync(path)) return { name: basename(path), path: publicPath(root, path), kind: 'missing', size: 0, checksum: null, deleted: false };
   assertNoSymlinkPath(root, path);
@@ -86,6 +88,8 @@ export const removePath = (root: string, inputPath: string) => {
 };
 
 export const movePath = (root: string, from: string, to: string) => {
+  assertUserDrivePathAllowed(from);
+  assertUserDrivePathAllowed(to);
   assertFileName(to);
   const source = hostPath(root, from);
   const target = hostPath(root, to);
@@ -107,6 +111,8 @@ export const movePath = (root: string, from: string, to: string) => {
 };
 
 export const copyPath = (root: string, from: string, to: string) => {
+  assertUserDrivePathAllowed(from);
+  assertUserDrivePathAllowed(to);
   assertFileName(to);
   const source = hostPath(root, from);
   const target = hostPath(root, to);
@@ -129,7 +135,8 @@ export const copyPath = (root: string, from: string, to: string) => {
   };
 };
 
-export const writeText = (root: string, inputPath: string, text: string) => {
+export const writeText = (root: string, inputPath: string, text: string, options: { allowProtected?: boolean } = {}) => {
+  if (options.allowProtected !== true) assertUserDrivePathAllowed(inputPath);
   assertFileName(inputPath);
   const path = hostPath(root, inputPath);
   assertNoSymlinkPath(root, path);
@@ -145,7 +152,8 @@ export const writeText = (root: string, inputPath: string, text: string) => {
   };
 };
 
-export const writeBuffer = (root: string, inputPath: string, content: Buffer) => {
+export const writeBuffer = (root: string, inputPath: string, content: Buffer, options: { allowProtected?: boolean } = {}) => {
+  if (options.allowProtected !== true) assertUserDrivePathAllowed(inputPath);
   assertFileName(inputPath);
   const path = hostPath(root, inputPath);
   assertNoSymlinkPath(root, path);
@@ -162,6 +170,7 @@ export const writeBuffer = (root: string, inputPath: string, content: Buffer) =>
 };
 
 export const download = async (root: string, url: string, inputPath: string, maxBytes = 0) => {
+  assertUserDrivePathAllowed(inputPath);
   assertFileName(inputPath);
   const target = hostPath(root, inputPath);
   assertNoSymlinkPath(root, target);
@@ -177,6 +186,6 @@ export const download = async (root: string, url: string, inputPath: string, max
       callback(maxBytes > 0 && written > maxBytes ? new BadRequestError('Download exceeds remaining shared space quota.') : null, chunk);
     },
   });
-  await pipeline(Readable.fromWeb(response.body as any), guard, createWriteStream(target, { mode: 0o600 }));
+  await pipeline(Readable.fromWeb(response.body), guard, createWriteStream(target, { mode: 0o600 }));
   return statFile(root, publicPath(root, target));
 };
