@@ -35,6 +35,7 @@ const agentFilePayloadOutput: GraphqlOutput = {
   storagePaths: { of: 'String', list: true },
   driveLinks: { of: 'String', list: true },
   modes: { of: 'String', list: true },
+  requestedModes: { of: 'String', list: true },
   fileShapeIds: { of: 'ID', list: true },
   fileShapeNames: { of: 'String', list: true },
   deletedAttachmentIds: { of: 'ID', list: true },

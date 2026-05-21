@@ -32,6 +32,7 @@ const emptyPayload = (agentId: string | null, status: string, message: string): 
   storagePaths: [],
   driveLinks: [],
   modes: [],
+  requestedModes: [],
   fileShapeIds: [],
   fileShapeNames: [],
   deletedAttachmentIds: [],
@@ -195,6 +196,7 @@ export async function uploadAgentFilesOperation(
       created_by: ownerUserId,
       ingestion_metadata: {
         modes: selectedModes,
+        requestedModes: selectedModes,
         driveFile,
         folderProtected: true,
         temporary,
@@ -208,6 +210,7 @@ export async function uploadAgentFilesOperation(
     payload.storagePaths.push(driveFile.drivePath);
     payload.driveLinks.push(driveFile.drivePath);
     for (const mode of selectedModes) if (!payload.modes.includes(mode)) payload.modes.push(mode);
+    for (const mode of selectedModes) if (!payload.requestedModes.includes(mode)) payload.requestedModes.push(mode);
     uploaded.push({
       attachmentId,
       agentId: storageAgentId,
@@ -219,6 +222,7 @@ export async function uploadAgentFilesOperation(
       drivePath: driveFile.drivePath,
       storageBucket,
       modes: selectedModes,
+      requestedModes: selectedModes,
     });
   }
 

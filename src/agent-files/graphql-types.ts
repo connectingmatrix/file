@@ -47,6 +47,7 @@ export type AgentFileOperationPayload = {
   storagePaths: string[];
   driveLinks: string[];
   modes: string[];
+  requestedModes: string[];
   fileShapeIds: string[];
   fileShapeNames: string[];
   deletedAttachmentIds: string[];
@@ -67,6 +68,7 @@ export type AgentFileUploadRecord = {
   drivePath: string;
   storageBucket: string;
   modes: string[];
+  requestedModes: string[];
 };
 
 export type AgentFileUploadIngestionHookInput = {
