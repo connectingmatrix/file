@@ -16,7 +16,7 @@ export type DriveUploadTicket = {
   expiresAt: number;
 };
 
-const secret = () => EnvLoader.get('SERVER_SECRET') || EnvLoader.get('ORM_CLIENT_SECRET') || EnvLoader.get('JWT_SECRET') || '';
+const secret = () => EnvLoader.getOrThrow('SERVER_SECRET');
 const sign = (body: string) => createHmac('sha256', secret()).update(body).digest('base64url');
 const fields = (payload: DriveUploadTicket): string[] => [
   payload.purpose,
@@ -49,7 +49,6 @@ const ticketFrom = (body: string): DriveUploadTicket => {
 };
 
 export const createDriveUploadTicket = (payload: DriveUploadTicket): string => {
-  if (!secret()) throw new Error('SERVER_SECRET is required for Drive upload tickets.');
   const body = bodyFrom(payload);
   return `${body}.${sign(body)}`;
 };
