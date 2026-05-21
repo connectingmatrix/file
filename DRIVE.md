@@ -10,7 +10,7 @@
 - Organization Drive host root: `$DRIVE_PATH/orgs/[ORGANIZATION-ID]/drive`
 - Virtual Drive paths remain `/drive/...` in API, ORM client, workflow, MCP, and UI payloads.
 
-Organization members mount the same organization Drive. Chat files upload through the organization Drive.
+Organization members mount the same organization Drive. User and organization drives use the same virtual path shapes; the mounted host root is selected by scope.
 
 ## Protected Paths
 
@@ -20,7 +20,7 @@ User-facing Drive create, upload, move, copy, and delete reject module-owned pro
 - `/drive/[USER-ID]/agents/[AGENT-ID]/artifacts/FILES/...`
 - `/drive/[USER-ID]/agent-projects/db/...`
 
-Chat uploads use `/drive/[ORGANIZATION-ID]/chats/...` and are user-deletable. Owning modules remove protected physical files only through internal file-service code paths, not through user Drive operations.
+Chat uploads use `/drive/[USER-ID]/chats/...` and are user-deletable. Owning modules remove protected physical files only through internal file-service code paths, not through user Drive operations.
 
 ## Upload Flow
 
