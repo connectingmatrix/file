@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { BadRequestError } from 'routing-controllers';
-import { EnvLoader } from '@gigav2/lib/env';
+import { EnvLoader } from '@connectingmatrix/orm/env';
 
 export type DriveUploadPurpose = 'drive' | 'ai-agent';
 export type DriveUploadTicket = {
@@ -15,9 +15,26 @@ export type DriveUploadTicket = {
   maxBytes: number;
   expiresAt: number;
 };
+export type DriveUploadTicketEnvelope = { payload: DriveUploadTicket; signature: string };
+export type DriveUploadTicketForm = {
+  driveTicketExpiresAt?: string;
+  driveTicketFileName?: string;
+  driveTicketMaxBytes?: string;
+  driveTicketMimeType?: string;
+  driveTicketOrganizationId?: string;
+  driveTicketPath?: string;
+  driveTicketPurpose?: string;
+  driveTicketScopeId?: string;
+  driveTicketScopeKind?: string;
+  driveTicketSignature?: string;
+  driveTicketUserId?: string;
+};
 
 const secret = () => EnvLoader.getOrThrow('SERVER_SECRET');
-const sign = (body: string) => createHmac('sha256', secret()).update(body).digest('base64url');
+export const assertDriveUploadTicketConfig = (): void => {
+  EnvLoader.getOrThrow('SERVER_SECRET');
+};
+const sign = (body: string) => createHmac('sha256', secret()).update(body).digest('hex');
 const fields = (payload: DriveUploadTicket): string[] => [
   payload.purpose,
   payload.scopeKind,
@@ -30,39 +47,54 @@ const fields = (payload: DriveUploadTicket): string[] => [
   `${payload.maxBytes}`,
   `${payload.expiresAt}`,
 ];
-const bodyFrom = (payload: DriveUploadTicket) => Buffer.from(fields(payload).map(encodeURIComponent).join('\n'), 'utf8').toString('base64url');
-const fieldAt = (items: string[], index: number): string => decodeURIComponent(items[index] || '');
-const ticketFrom = (body: string): DriveUploadTicket => {
-  const items = Buffer.from(body, 'base64url').toString('utf8').split('\n');
+const bodyFrom = (payload: DriveUploadTicket) => fields(payload).map(encodeURIComponent).join('\n');
+const requiredField = (value: string | undefined, name: string): string => {
+  if (!value) throw new BadRequestError(`${name} is required.`);
+  return value;
+};
+const numberField = (value: string | undefined, name: string): number => {
+  const numberValue = Number(requiredField(value, name));
+  if (!Number.isFinite(numberValue)) throw new BadRequestError(`${name} is invalid.`);
+  return numberValue;
+};
+const purposeField = (value: string | undefined): DriveUploadPurpose => {
+  if (value === 'drive' || value === 'ai-agent') return value;
+  throw new BadRequestError('Drive upload ticket purpose is invalid.');
+};
+const scopeKindField = (value: string | undefined): DriveUploadTicket['scopeKind'] => {
+  if (value === 'user' || value === 'organization') return value;
+  throw new BadRequestError('Drive upload ticket scope is invalid.');
+};
+const ticketFrom = (form: DriveUploadTicketForm): DriveUploadTicket => {
   return {
-    purpose: fieldAt(items, 0) === 'ai-agent' ? 'ai-agent' : 'drive',
-    scopeKind: fieldAt(items, 1) === 'organization' ? 'organization' : 'user',
-    scopeId: fieldAt(items, 2),
-    userId: fieldAt(items, 3),
-    organizationId: fieldAt(items, 4) || null,
-    path: fieldAt(items, 5),
-    fileName: fieldAt(items, 6),
-    mimeType: fieldAt(items, 7),
-    maxBytes: Number(fieldAt(items, 8)),
-    expiresAt: Number(fieldAt(items, 9)),
+    purpose: purposeField(form.driveTicketPurpose),
+    scopeKind: scopeKindField(form.driveTicketScopeKind),
+    scopeId: requiredField(form.driveTicketScopeId, 'driveTicketScopeId'),
+    userId: requiredField(form.driveTicketUserId, 'driveTicketUserId'),
+    organizationId: form.driveTicketOrganizationId || null,
+    path: requiredField(form.driveTicketPath, 'driveTicketPath'),
+    fileName: requiredField(form.driveTicketFileName, 'driveTicketFileName'),
+    mimeType: requiredField(form.driveTicketMimeType, 'driveTicketMimeType'),
+    maxBytes: numberField(form.driveTicketMaxBytes, 'driveTicketMaxBytes'),
+    expiresAt: numberField(form.driveTicketExpiresAt, 'driveTicketExpiresAt'),
   };
 };
 
-export const createDriveUploadTicket = (payload: DriveUploadTicket): string => {
+export const createDriveUploadTicket = (payload: DriveUploadTicket): DriveUploadTicketEnvelope => {
   const body = bodyFrom(payload);
-  return `${body}.${sign(body)}`;
+  return { payload, signature: sign(body) };
 };
 
-export const verifyDriveUploadTicket = (ticket: string): DriveUploadTicket => {
-  const [body, signature] = ticket.split('.');
-  if (!body || !signature || !secret()) throw new BadRequestError('Drive upload ticket is required.');
+export const verifyDriveUploadTicket = (form: DriveUploadTicketForm): DriveUploadTicket => {
+  const payload = ticketFrom(form);
+  const signature = requiredField(form.driveTicketSignature, 'driveTicketSignature');
+  const body = bodyFrom(payload);
   const expected = sign(body);
-  const left = Buffer.from(signature);
-  const right = Buffer.from(expected);
+  const left = Buffer.from(signature, 'hex');
+  const right = Buffer.from(expected, 'hex');
   if (left.length !== right.length || !timingSafeEqual(left, right)) throw new BadRequestError('Drive upload ticket is invalid.');
-  const payload = ticketFrom(body);
   if (payload.expiresAt < Date.now()) throw new BadRequestError('Drive upload ticket expired.');
   return payload;
 };
 
-export type DriveUploadPreflightResult = { uploadUrl: string; ticket: string; path: string; expiresAt: number; maxBytes: number };
+export type DriveUploadPreflightResult = { uploadUrl: string; ticket: DriveUploadTicketEnvelope; path: string; expiresAt: number; maxBytes: number };

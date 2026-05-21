@@ -10,7 +10,7 @@
 - Organization Drive host root: `$DRIVE_PATH/orgs/[ORGANIZATION-ID]/drive`
 - Virtual Drive paths remain `/drive/...` in API, ORM client, workflow, MCP, and UI payloads.
 
-Organization members mount the same organization Drive. Personal chat files stay in the user Drive.
+Organization members mount the same organization Drive. Chat files upload through the organization Drive.
 
 ## Protected Paths
 
@@ -20,15 +20,15 @@ User-facing Drive create, upload, move, copy, and delete reject module-owned pro
 - `/drive/[USER-ID]/agents/[AGENT-ID]/artifacts/FILES/...`
 - `/drive/[USER-ID]/agent-projects/db/...`
 
-Chat uploads use `/drive/[USER-ID]/chats/...` and are user-deletable. Owning modules remove protected physical files only through internal file-service code paths, not through user Drive operations.
+Chat uploads use `/drive/[ORGANIZATION-ID]/chats/...` and are user-deletable. Owning modules remove protected physical files only through internal file-service code paths, not through user Drive operations.
 
 ## Upload Flow
 
 1. ORM client calls `Drive.preflight` or `AIAgentFile.preflight` with path/scope, file name, mime type, and byte size.
 2. Backend resolves signed ORM request context, verifies organization membership when an organization Drive is requested, checks permissions, reads plan limits, calculates current usage, and rejects protected user paths.
-3. File-service returns a short-lived signed ticket.
-4. ORM client uploads multipart data to the descriptor-backed upload operation with `x-giga-drive-upload-ticket`.
-5. Upload routes validate the ticket before multer parses the multipart body and verify final bytes do not exceed the approved ticket size.
+3. File-service returns a short-lived signed ticket envelope.
+4. ORM client uploads multipart data and ticket fields to the descriptor-backed upload operation.
+5. Upload routes parse multipart data, validate the ticket fields, and verify final bytes do not exceed the approved ticket size.
 
 ## Storage Ownership
 

@@ -1,4 +1,4 @@
-import { EnvLoader } from '@gigav2/lib/env';
+import { EnvLoader } from '@connectingmatrix/orm/env';
 
 export const SHARED_SPACE_BYTES = 5 * 1024 * 1024 * 1024;
 export const DRIVE_ROOT = '/drive';
