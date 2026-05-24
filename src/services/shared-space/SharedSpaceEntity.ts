@@ -6,7 +6,7 @@ import { OrganisationEntity } from '@connectingmatrix/orm/entities/OrganisationE
 import { readLimitMatrixValue } from '@gigav2/services/auth/permission-context';
 import { getOrganizationAccessContext } from '@gigav2/services/organization/access';
 import { DRIVE_ROOT, SHARED_SPACE_BYTES, SHARED_SPACE_OS_QUOTA_ENFORCED } from './constants';
-import { assertWritable, copyPath, download, makeFolder, movePath, removePath, statFile, writeBuffer, writeText } from './file-ops';
+import { assertWritable, copyPath, download, makeFolder, movePath, readFilePreview, removePath, statFile, writeBuffer, writeText } from './file-ops';
 import { assertUserDrivePathAllowed } from './policy';
 import { drivePath, driveRootFor, hostPath, type DriveScope } from './path';
 import { createDriveUploadTicket, type DriveUploadPreflightResult, type DriveUploadPurpose } from './ticket';
@@ -102,6 +102,11 @@ export class SharedSpaceEntity {
   public async stat(context: SharedSpaceContext, input: { path: string }) {
     const access = await this.access(context, 'read');
     return statFile(access.root, input.path);
+  }
+
+  public async readFile(context: SharedSpaceContext, input: { maxPreviewBytes?: number | null; path: string }) {
+    const access = await this.access(context, 'read');
+    return readFilePreview(access.root, input.path, input.maxPreviewBytes || undefined);
   }
 
   public async createFolder(context: SharedSpaceContext, input: { path: string }) {

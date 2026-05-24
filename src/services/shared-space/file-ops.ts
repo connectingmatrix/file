@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { copyFileSync, createReadStream, createWriteStream, existsSync, lstatSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, relative, sep } from 'node:path';
+import { copyFileSync, createReadStream, createWriteStream, existsSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { basename, dirname, extname, join, relative, sep } from 'node:path';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { BadRequestError } from 'routing-controllers';
@@ -14,6 +14,41 @@ export const assertWritable = (limit: { quotaBytes: number; usedBytes: number },
 export const assertFileName = (path: string) => {
   if (blockedName(path)) throw new BadRequestError('Executable script files are not allowed in shared space.');
 };
+
+export const SHARED_SPACE_PREVIEW_BYTES = 30 * 1024 * 1024;
+
+const MIME_TYPES_BY_EXTENSION: Record<string, string> = {
+  '.aac': 'audio/aac',
+  '.avi': 'video/x-msvideo',
+  '.csv': 'text/csv',
+  '.doc': 'application/msword',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.gif': 'image/gif',
+  '.html': 'text/html',
+  '.jpeg': 'image/jpeg',
+  '.jpg': 'image/jpeg',
+  '.json': 'application/json',
+  '.md': 'text/markdown',
+  '.mov': 'video/quicktime',
+  '.mp3': 'audio/mpeg',
+  '.mp4': 'video/mp4',
+  '.ogg': 'audio/ogg',
+  '.pdf': 'application/pdf',
+  '.png': 'image/png',
+  '.ppt': 'application/vnd.ms-powerpoint',
+  '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  '.svg': 'image/svg+xml',
+  '.tsv': 'text/tab-separated-values',
+  '.txt': 'text/plain',
+  '.wav': 'audio/wav',
+  '.webm': 'video/webm',
+  '.webp': 'image/webp',
+  '.xls': 'application/vnd.ms-excel',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  '.xml': 'application/xml',
+};
+
+const mimeTypeForName = (name: string) => MIME_TYPES_BY_EXTENSION[extname(name).toLowerCase()] || 'application/octet-stream';
 
 const assertNoSymlinkPath = (root: string, target: string) => {
   let cursor = root;
@@ -58,6 +93,14 @@ export const statFile = async (root: string, inputPath: string) => {
     checksum: stat.isDirectory() ? null : await fileSha256(path),
     updatedAt: stat.mtime.toISOString(),
   };
+};
+
+export const readFilePreview = async (root: string, inputPath: string, maxPreviewBytes = SHARED_SPACE_PREVIEW_BYTES) => {
+  const file = await statFile(root, inputPath);
+  const mimeType = file.kind === 'folder' ? 'inode/directory' : mimeTypeForName(file.name);
+  const metadata = { ...file, mimeType, sizeBytes: file.size };
+  if (file.kind !== 'file' || file.size > maxPreviewBytes) return metadata;
+  return { ...metadata, contentBase64: readFileSync(hostPath(root, file.path)).toString('base64') };
 };
 
 export const makeFolder = (root: string, inputPath: string) => {
