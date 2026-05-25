@@ -32,7 +32,7 @@ Chat uploads use `/drive/[USER-ID]/chats/...` and are user-deletable. Owning mod
 
 ## Storage Ownership
 
-- AI Agent user uploads are stored under `/drive/[USER-ID]/agents/[AGENT-ID]/FILES/...` and create `AIAgentAttachment` rows through ORM entities.
-- AI Agent artifacts are stored under `/drive/[USER-ID]/agents/[AGENT-ID]/artifacts/FILES/...`.
+- AI Agent uploads are stored under `/drive/[USER-ID]/agents/[AGENT-ID]/FILES/...` for user scope or `/drive/[ORGANIZATION-ID]/agents/[AGENT-ID]/FILES/...` for organization scope, and create `AIAgentAttachment` rows through ORM entities.
+- AI Agent artifacts are stored under the matching user or organization `/drive/[SCOPE-ID]/agents/[AGENT-ID]/artifacts/FILES/...` folder.
 - Post attachments and AgentProjects source/code uploads remain Supabase Storage artifacts through ORM entity storage helpers.
 - AgentProjects databases are protected under `/drive/[USER-ID]/agent-projects/db/...`.

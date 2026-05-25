@@ -8,7 +8,7 @@ import { getOrganizationAccessContext } from '@gigav2/services/organization/acce
 import { DRIVE_ROOT, SHARED_SPACE_BYTES, SHARED_SPACE_OS_QUOTA_ENFORCED } from './constants';
 import { assertWritable, copyPath, download, makeFolder, movePath, readFilePreview, removePath, statFile, writeBuffer, writeText } from './file-ops';
 import { assertUserDrivePathAllowed } from './policy';
-import { drivePath, driveRootFor, hostPath, type DriveScope } from './path';
+import { drivePath, getDriveRoot, hostPath, type DriveScope } from './path';
 import { createDriveUploadTicket, type DriveUploadPreflightResult, type DriveUploadPurpose } from './ticket';
 import { folderBytes, listFolder } from './usage';
 import type { GraphqlResolverContext } from '@gigav2/types/graphql.types';
@@ -46,7 +46,7 @@ export class SharedSpaceEntity {
   }
 
   private root() {
-    return driveRootFor(this.scope);
+    return getDriveRoot(this.scope);
   }
 
   private existingSize(path: string) {

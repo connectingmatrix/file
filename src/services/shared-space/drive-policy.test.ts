@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { DRIVE_PATH } from './constants';
-import { orgRoot, userRoot } from './path';
+import { getDriveRoot, orgRoot, userRoot } from './path';
 import { assertUserDrivePathAllowed } from './policy';
 import { removePath } from './file-ops';
 
@@ -21,6 +21,8 @@ describe('Drive path policy', () => {
     process.env.DRIVE_PATH = mkdtempSync(join(tmpdir(), 'giga-drive-'));
     expect(userRoot('user-1')).toContain('/users/user-1/drive');
     expect(orgRoot('org-1')).toContain('/orgs/org-1/drive');
+    expect(getDriveRoot({ kind: 'user', userId: 'user-1' })).toContain('/users/user-1/drive');
+    expect(getDriveRoot({ kind: 'organization', organizationId: 'org-1' })).toContain('/orgs/org-1/drive');
   });
 
   it('protects agent and agent project db paths but allows chat paths', () => {

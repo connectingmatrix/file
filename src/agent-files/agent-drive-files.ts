@@ -5,9 +5,8 @@ import { basename, dirname, join, resolve, sep } from 'node:path';
 import { Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { BadRequestError } from 'routing-controllers';
-import { SHARED_SPACE_ROOT } from '../services/shared-space/constants';
 import { writeBuffer, statFile } from '../services/shared-space/file-ops';
-import { publicPath } from '../services/shared-space/path';
+import { getDriveRoot, publicPath, type DriveScope } from '../services/shared-space/path';
 
 export type AgentDriveScope = {
   userId: string;
@@ -35,10 +34,11 @@ const clean = (value: string) => value.replace(/[^a-zA-Z0-9_.-]/g, '_');
 const safeFileName = (value: string) => clean(basename(value || 'agent-file')) || 'agent-file';
 
 export function agentDriveRoot(scope: AgentDriveScope): { root: string; scopeKind: 'user' | 'organization'; scopeId: string } {
-  const userId = clean(scope.userId || 'anonymous');
-  const root = resolve(SHARED_SPACE_ROOT(), 'users', userId, 'drive');
-  mkdirSync(root, { recursive: true, mode: 0o700 });
-  return { root, scopeKind: 'user', scopeId: userId };
+  const organizationId = clean(scope.organizationId || '');
+  const userId = clean(scope.userId || '');
+  if (!organizationId && !userId) throw new BadRequestError('A user or organization scope is required for AI Agent Drive storage.');
+  const driveScope: DriveScope = organizationId ? { kind: 'organization', organizationId } : { kind: 'user', userId };
+  return { root: getDriveRoot(driveScope), scopeKind: driveScope.kind, scopeId: organizationId || userId };
 }
 
 export function agentDriveFolder(scope: AgentDriveScope, agentId: string): { root: string; folderPath: string; folderHostPath: string; scopeKind: 'user' | 'organization'; scopeId: string; deletable: false } {
@@ -108,7 +108,7 @@ export async function writeAgentArtifactFile(input: {
   body: Buffer;
 }): Promise<AgentDriveFileObject> {
   if (!input.agentId) throw new BadRequestError('agentId is required.');
-  if (!input.scope.userId) throw new BadRequestError('A user scope is required for AI Agent artifact storage.');
+  if (!input.scope.userId && !input.scope.organizationId) throw new BadRequestError('A user or organization scope is required for AI Agent artifact storage.');
   const folder = agentArtifactFolder(input.scope, input.agentId);
   const id = randomUUID();
   const fileName = `${id}-${safeFileName(input.fileName)}`;

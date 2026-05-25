@@ -12,7 +12,8 @@ export type DriveScope = { kind: 'user'; userId: string } | { kind: 'organizatio
 
 export const userRoot = (userId: string) => ensureRoot(resolve(DRIVE_PATH(), 'users', cleanScope(userId), 'drive'));
 export const orgRoot = (organizationId: string) => ensureRoot(resolve(DRIVE_PATH(), 'orgs', cleanScope(organizationId), 'drive'));
-export const driveRootFor = (scope: DriveScope) => (scope.kind === 'organization' ? orgRoot(scope.organizationId) : userRoot(scope.userId));
+export const getDriveRoot = (scope: DriveScope) => (scope.kind === 'organization' ? orgRoot(scope.organizationId) : userRoot(scope.userId));
+export const driveRootFor = getDriveRoot;
 
 export const drivePath = (value?: string | null) => {
   const raw = String(value || '/').replace(/\\/g, '/').trim() || '/';
