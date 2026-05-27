@@ -151,6 +151,7 @@ export async function uploadAgentFilesOperation(
   const ownerUserId = contextUserId(context, input);
   const organizationId = contextOrganizationId(context, input);
   const temporary = boolValue(input.temporary) || !agentId;
+  const fileRole = textValue(input.fileRole || input.file_role) || 'DRIVE';
   const baseModes = listText(input.modes || input.ingestionModes || input.ingestion_modes);
   const modes = baseModes.length ? baseModes : ['AUTO'];
   const payload = emptyPayload(agentId, 'queued', 'AI Agent file upload queued.');
@@ -179,7 +180,7 @@ export async function uploadAgentFilesOperation(
           replaceAttachmentId: attachmentId,
         });
     const storageBucket = driveFile.scopeKind === 'organization' ? 'organization-drive' : 'user-drive';
-    await AIAgentAttachmentEntity.create({
+    const attachmentRow: AIAgentAttachmentRow = {
       id: attachmentId,
       agent_id: agentId,
       shared_space_id: driveFile.scopeId,
@@ -195,6 +196,7 @@ export async function uploadAgentFilesOperation(
       ingestion_modes: selectedModes,
       created_by: ownerUserId,
       ingestion_metadata: {
+        fileRole,
         modes: selectedModes,
         requestedModes: selectedModes,
         driveFile,
@@ -203,7 +205,10 @@ export async function uploadAgentFilesOperation(
         draftId: draftId || null,
         deletionPolicy: 'agent-folder-protected-file-removable-from-memory',
       },
-    });
+    };
+    const existingAttachment = await AIAgentAttachmentEntity.findById(attachmentId);
+    if (existingAttachment) await existingAttachment.update(attachmentRow);
+    else await AIAgentAttachmentEntity.create(attachmentRow);
     payload.attachmentIds.push(attachmentId);
     payload.fileIds.push(driveFile.id);
     payload.fileNames.push(driveFile.fileName);
@@ -226,12 +231,15 @@ export async function uploadAgentFilesOperation(
     });
   }
 
-  if (agentId && uploaded.length && !temporary) {
+  if (agentId && uploaded.length && !temporary && !['SKILL', 'MANIFEST'].includes(fileRole)) {
     const hookResult = await runAgentFileUploadIngestionHook({ agentId, ownerUserId, organizationId, temporary, files: uploaded });
     payload.processId = hookResult.processId;
     payload.status = hookResult.status;
     payload.fileShapeIds = hookResult.fileShapeIds;
     payload.fileShapeNames = hookResult.fileShapeNames;
+  } else if (agentId && uploaded.length && !temporary) {
+    payload.status = 'uploaded';
+    payload.message = 'AI Agent control file uploaded.';
   }
 
   return payload;
