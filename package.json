@@ -7,13 +7,14 @@
   "dependencies": {
     "@connectingmatrix/orm": "link:../giga-orm",
     "@supabase/supabase-js": "^2.50.4",
-    "jszip": "^3.10.1",
-    "xlsx": "^0.18.5",
-    "mammoth": "^1.11.0",
     "exceljs": "^4.4.0",
-    "multer": "^2.0.1",
+    "giga-ai-helper": "git+https://github.com/connectingmatrix/ai-helper.git#main",
+    "jszip": "^3.10.1",
     "lodash": "^4.17.21",
-    "giga-ai-helper": "git+https://github.com/connectingmatrix/ai-helper.git#main"
+    "mammoth": "^1.11.0",
+    "multer": "^2.0.1",
+    "routing-controllers": "^0.9.0",
+    "xlsx": "^0.18.5"
   },
   "exports": {
     ".": "./src/index.ts",
