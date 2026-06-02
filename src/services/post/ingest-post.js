@@ -18,8 +18,9 @@ async function ingestPost(supabase, input) {
         metadata: {
             post_title: String(post.title || '').trim() || null,
             source_table: 'ai_posts',
-        },
+    },
         replaceExisting: input.replaceExisting,
+        strict: input.strict || false,
         chunking: {
             maxChunkChars: input.chunkSize,
             overlapChars: input.chunkOverlap,

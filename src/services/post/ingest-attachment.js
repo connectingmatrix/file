@@ -34,6 +34,7 @@ async function ingestAttachment(supabase, input) {
             source_table: 'ai_attachments',
         },
         replaceExisting: input.replaceExisting,
+        strict: input.strict || false,
         chunking: {
             maxChunkChars: input.chunkSize,
             overlapChars: input.chunkOverlap,

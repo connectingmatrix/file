@@ -26,6 +26,7 @@ export async function ingestPost(supabase: SupabaseClient, input: IngestPostInpu
       source_table: 'ai_posts',
     },
     replaceExisting: input.replaceExisting,
+    strict: input.strict || false,
     chunking: {
       maxChunkChars: input.chunkSize,
       overlapChars: input.chunkOverlap,

@@ -45,6 +45,7 @@ async function insertChunksInBatches(_supabase: SupabaseClient, rows: ChunkInser
 export async function ingestSource(supabase: SupabaseClient, input: IngestSourceInput): Promise<IngestionResult> {
   const content = input.content.trim();
   if (!content) {
+    if (input.strict) throw new Error('ingestSource requires non-empty content in strict mode.');
     return {
       status: 'skipped',
       sourceKind: input.sourceKind,
@@ -65,6 +66,7 @@ export async function ingestSource(supabase: SupabaseClient, input: IngestSource
 
   const chunks = chunkText(content, input.chunking);
   if (!chunks.length) {
+    if (input.strict) throw new Error('ingestSource requires non-empty chunk result in strict mode.');
     return {
       status: 'skipped',
       sourceKind: input.sourceKind,
@@ -77,8 +79,10 @@ export async function ingestSource(supabase: SupabaseClient, input: IngestSource
 
   const existing = await baseSourceQuery(supabase, input);
   const existingHashes = new Set(existing.map((row) => String(row.metadata?.source_hash || '')).filter(Boolean));
+  const hasExistingHash = existingHashes.size === 1 && existingHashes.has(sourceHash);
 
-  if (existing.length > 0 && existingHashes.size === 1 && existingHashes.has(sourceHash)) {
+  if (existing.length > 0 && hasExistingHash) {
+    if (input.strict) throw new Error('ingestSource skipped due to unchanged source content in strict mode.');
     return {
       status: 'skipped',
       sourceKind: input.sourceKind,
@@ -97,6 +101,11 @@ export async function ingestSource(supabase: SupabaseClient, input: IngestSource
   }
 
   const embeddingResults = await createEmbeddings(chunks.map((chunk) => chunk.content));
+  if (input.strict) {
+    if (embeddingResults.length !== chunks.length) throw new Error('Embedding generation count does not match chunk count in strict mode.');
+    if (embeddingResults.some((entry) => !entry?.pgVector)) throw new Error('Embedding generation returned missing vectors in strict mode.');
+    if (chunks.some((entry) => !String(entry.content || '').trim())) throw new Error('ingestSource contains empty chunk content in strict mode.');
+  }
 
   const rows: ChunkInsertRow[] = chunks.map((chunk, index) => ({
     subject_id: input.subjectId,
@@ -116,6 +125,16 @@ export async function ingestSource(supabase: SupabaseClient, input: IngestSource
   }));
 
   const insertedChunks = await insertChunksInBatches(supabase, rows);
+
+  if (input.strict) {
+    if (insertedChunks !== chunks.length) throw new Error('Inserted chunk count does not match expected chunk count in strict mode.');
+    for (const row of rows) {
+      const value = String(row.metadata?.source_hash || '').trim();
+      if (!value) throw new Error('Missing source_hash for inserted chunk in strict mode.');
+    }
+  }
+
+  if (sourceHash !== rows[0]?.metadata?.source_hash) throw new Error('source_hash mismatch on insertion.');
 
   return {
     status: 'inserted',

@@ -38,6 +38,7 @@ export async function ingestAttachment(supabase: any, input: IngestAttachmentInp
       source_table: 'ai_attachments',
     },
     replaceExisting: input.replaceExisting,
+    strict: input.strict || false,
     chunking: {
       maxChunkChars: input.chunkSize,
       overlapChars: input.chunkOverlap,
