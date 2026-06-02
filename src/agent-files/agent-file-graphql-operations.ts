@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { lstatSync, rmSync } from 'node:fs';
+import { existsSync, lstatSync, rmSync } from 'node:fs';
 import { writeAgentDriveFile, writeAgentDriveFileStream } from './agent-drive-files';
 import { runAgentFileUploadIngestionHook } from './agent-file-ingestion-hooks';
 import { AIAgentAttachmentEntity, type AIAgentAttachmentRow } from '@connectingmatrix/orm/entities/AIAgentAttachmentEntity';
@@ -94,6 +94,13 @@ const uploadList = (files: AgentFileGraphqlUploadSlot[] | AgentFileGraphqlUpload
   return Array.isArray(files) ? files : [files];
 };
 
+const uploadStatusForRole = (temporary: boolean, fileRole: string): string => {
+  if (temporary) return 'temporary';
+  if (fileRole === 'SKILL') return 'attached';
+  if (fileRole === 'MANIFEST') return 'applied';
+  return 'queued';
+};
+
 async function readUpload(slot: AgentFileGraphqlUploadSlot): Promise<UploadFileDetail> {
   const file: AgentFileGraphqlUpload = await slot;
   const fileName = textValue(file.filename || file.name) || `agent-file-${randomUUID()}`;
@@ -129,6 +136,7 @@ function removeHostFile(row: AIAgentAttachmentRow): boolean {
   const driveFile = rowDriveFile(row);
   const hostPath = textValue(driveFile.hostPath || driveFile.physicalPath);
   if (!hostPath) return false;
+  if (!existsSync(hostPath)) return false;
   const stat = lstatSync(hostPath);
   if (stat.isDirectory() || stat.isSymbolicLink()) return false;
   rmSync(hostPath, { force: true });
@@ -190,7 +198,7 @@ export async function uploadAgentFilesOperation(
       filename: driveFile.fileName,
       mime_type: driveFile.mimeType,
       byte_size: driveFile.sizeBytes,
-      ingestion_status: temporary ? 'temporary' : 'queued',
+      ingestion_status: uploadStatusForRole(temporary, fileRole),
       drive_file: driveFile,
       folder_protected: true,
       ingestion_modes: selectedModes,
