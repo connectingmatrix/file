@@ -1,6 +1,13 @@
 import { basename, dirname } from 'node:path';
 import { existsSync, lstatSync, mkdirSync } from 'node:fs';
 import { BadRequestError } from 'routing-controllers';
+import {
+  canOrmModuleAction,
+  readOrmModulePermissionSummary,
+  readOrmPolicyLimit,
+  type OrmRequestContext,
+} from '@connectingmatrix/orm/context/request-access-context';
+import type { OrmPermissionSummary } from '@connectingmatrix/orm/auth/app-auth-policy';
 import { readUserMatrixState } from '@gigav2/manifest/user-matrix';
 import { OrganisationEntity } from '@connectingmatrix/orm/entities/OrganisationEntity';
 import { readLimitMatrixValue } from '@gigav2/services/auth/permission-context';
@@ -15,11 +22,15 @@ import type { GraphqlResolverContext } from '@gigav2/types/graphql.types';
 import type { WorkflowRuntimeSettings } from '@gigav2/types/workflow.types';
 import type { Action } from '@gigav2/types/org.types';
 
-type SharedSpaceContext = Pick<GraphqlResolverContext, 'supabase'> & Partial<Pick<GraphqlResolverContext, 'effectiveRoot' | 'request' | 'userId'>>;
-type Access = { root: string; quotaBytes: number; usedBytes: number; remainingBytes: number; permissions?: { allowCreate?: boolean; allowRead?: boolean; allowUpdate?: boolean; allowDelete?: boolean } | null };
+type SharedSpaceContext = Pick<GraphqlResolverContext, 'supabase'> &
+  Partial<Pick<GraphqlResolverContext, 'effectiveRoot' | 'ormRequestContext' | 'request' | 'signedAuth' | 'userId'>>;
+type Access = { root: string; quotaBytes: number; usedBytes: number; remainingBytes: number; permissions?: Partial<OrmPermissionSummary> | null };
 type PreflightInput = { fileName: string; mimeType?: string | null; organizationId?: string | null; path: string; sizeBytes: number; purpose?: DriveUploadPurpose };
+type SharedSpaceRequest = GraphqlResolverContext['request'] & { ormRequestContext?: OrmRequestContext | null };
 
 const cleanId = (value: string) => String(value || '').trim();
+const requestAccess = (context: SharedSpaceContext): OrmRequestContext | null =>
+  context.ormRequestContext || ((context.request as SharedSpaceRequest | undefined)?.ormRequestContext || null);
 const uploadPath = (folder: string, fileName: string) => {
   const base = drivePath(folder);
   const prefix = base === '/' ? DRIVE_ROOT : `${DRIVE_ROOT}${base}`;
@@ -65,13 +76,24 @@ export class SharedSpaceEntity {
     if (!userId) throw new BadRequestError('userId is required.');
     const root = this.root();
     const usedBytes = folderBytes(root);
+    const ormAccess = requestAccess(context);
     if (this.scope.kind === 'user') {
       if (context.effectiveRoot !== true && userId !== this.scope.userId) throw new BadRequestError('User Drive access is required.');
+      if (ormAccess?.signed) {
+        const quotaBytes = readOrmPolicyLimit(ormAccess, 'USER_DRIVE_BYTES') || SHARED_SPACE_BYTES;
+        return { root, quotaBytes, usedBytes, remainingBytes: Math.max(0, quotaBytes - usedBytes), permissions: { allowCreate: true, allowRead: true, allowUpdate: true, allowDelete: true } };
+      }
       const state = await readUserMatrixState(context.supabase, { effectiveRoot: context.effectiveRoot === true, organizationId: null, userId });
       const quotaBytes = readLimitMatrixValue(state, 'USER_DRIVE_BYTES') || SHARED_SPACE_BYTES;
       return { root, quotaBytes, usedBytes, remainingBytes: Math.max(0, quotaBytes - usedBytes), permissions: { allowCreate: true, allowRead: true, allowUpdate: true, allowDelete: true } };
     }
-    const resolverContext = { effectiveRoot: context.effectiveRoot === true, request: context.request, supabase: context.supabase, userId };
+    if (ormAccess?.signed && (ormAccess.root === true || cleanId(ormAccess.organization_id || ormAccess.organisation_id || '') === this.scope.organizationId)) {
+      const permissions = readOrmModulePermissionSummary(ormAccess, 'SHARED_SPACE');
+      if (!permissions || !canOrmModuleAction(ormAccess, 'SHARED_SPACE', action)) throw new BadRequestError(`Insufficient permissions for SHARED_SPACE ${action}.`);
+      const quotaBytes = readOrmPolicyLimit(ormAccess, 'ORG_SHARED_SPACE_BYTES') || SHARED_SPACE_BYTES;
+      return { root, quotaBytes, usedBytes, remainingBytes: Math.max(0, quotaBytes - usedBytes), permissions };
+    }
+    const resolverContext = { effectiveRoot: context.effectiveRoot === true, ormRequestContext: context.ormRequestContext, request: context.request, signedAuth: context.signedAuth, supabase: context.supabase, userId };
     const access = await getOrganizationAccessContext(context.supabase, userId, this.scope.organizationId, resolverContext as GraphqlResolverContext);
     if (!resolverContext.effectiveRoot && !access.hasMembership) throw new BadRequestError('Organization membership is required.');
     OrganisationEntity.requirePermission(access, { module: 'SHARED_SPACE', action });
