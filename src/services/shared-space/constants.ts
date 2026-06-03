@@ -1,6 +1,6 @@
 import { EnvLoader } from '@connectingmatrix/orm/env';
 
-const DEFAULT_SHARED_SPACE_BYTES = 5 * 1024 * 1024 * 1024;
+const DEFAULT_SHARED_SPACE_BYTES = 20 * 1024 * 1024 * 1024;
 const configuredSharedSpaceBytes = () => {
   const value = Number(EnvLoader.get('GIGA_SHARED_SPACE_BYTES') || '');
   return Number.isFinite(value) && value > 0 ? value : DEFAULT_SHARED_SPACE_BYTES;
