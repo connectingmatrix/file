@@ -9,6 +9,26 @@ const chunking_1 = require("giga-ai-helper/chunking");
 const embeddings_1 = require("giga-ai-helper/embeddings");
 const entities_1 = require("@connectingmatrix/orm/entities");
 const INSERT_BATCH_SIZE = 100;
+const EMBEDDING_BATCH_SIZE = 64;
+const DEFAULT_MAX_CHUNK_CHARS = 1200;
+function estimateTokenCount(content) {
+    return Math.max(1, Math.ceil(content.trim().length / 4));
+}
+function enforceChunkCharLimit(chunks, maxChunkChars) {
+    const output = [];
+    for (const chunk of chunks) {
+        if (chunk.content.length <= maxChunkChars) {
+            output.push({ ...chunk, chunkIndex: output.length });
+            continue;
+        }
+        for (let start = 0; start < chunk.content.length; start += maxChunkChars) {
+            const content = chunk.content.slice(start, start + maxChunkChars).trim();
+            if (content)
+                output.push({ chunkIndex: output.length, content, tokenCount: estimateTokenCount(content) });
+        }
+    }
+    return output;
+}
 function baseSourceQuery(_supabase, input) {
     if (input.sourceKind === 'attachment' && !input.attachmentId)
         throw new Error('attachmentId is required for attachment chunk ingestion.');
@@ -38,6 +58,7 @@ async function insertChunksInBatches(_supabase, rows) {
     return inserted;
 }
 async function ingestSource(supabase, input) {
+    var _a;
     const content = input.content.trim();
     if (!content) {
         if (input.strict)
@@ -58,7 +79,7 @@ async function ingestSource(supabase, input) {
         postId: input.postId,
         attachmentId: input.attachmentId,
     });
-    const chunks = (0, chunking_1.chunkText)(content, input.chunking);
+    const chunks = enforceChunkCharLimit((0, chunking_1.chunkText)(content, input.chunking), ((_a = input.chunking) === null || _a === void 0 ? void 0 : _a.maxChunkChars) || DEFAULT_MAX_CHUNK_CHARS);
     if (!chunks.length) {
         if (input.strict)
             throw new Error('ingestSource requires non-empty chunk result in strict mode.');
@@ -73,7 +94,8 @@ async function ingestSource(supabase, input) {
     }
     const existing = await baseSourceQuery(supabase, input);
     const existingHashes = new Set(existing.map((row) => { var _a; return String(((_a = row.metadata) === null || _a === void 0 ? void 0 : _a.source_hash) || ''); }).filter(Boolean));
-    if (existing.length > 0 && existingHashes.size === 1 && existingHashes.has(sourceHash)) {
+    const replaceExisting = input.replaceExisting !== false;
+    if (existing.length > 0 && existingHashes.size === 1 && existingHashes.has(sourceHash) && !replaceExisting) {
         if (input.strict)
             throw new Error('ingestSource skipped due to unchanged source content in strict mode.');
         return {
@@ -86,16 +108,21 @@ async function ingestSource(supabase, input) {
         };
     }
     let deletedChunks = 0;
-    const replaceExisting = input.replaceExisting !== false;
     if (replaceExisting && existing.length > 0) {
         await deleteSourceChunks(supabase, input);
         deletedChunks = existing.length;
     }
-    const embeddingResults = await (0, embeddings_1.createEmbeddings)(chunks.map((chunk) => chunk.content));
+    const embeddingResults = [];
+    for (let start = 0; start < chunks.length; start += EMBEDDING_BATCH_SIZE) {
+        const batch = chunks.slice(start, start + EMBEDDING_BATCH_SIZE);
+        embeddingResults.push(...(await (0, embeddings_1.createEmbeddings)(batch.map((chunk) => chunk.content))));
+    }
     if (input.strict) {
         if (embeddingResults.length !== chunks.length) throw new Error('Embedding generation count does not match chunk count in strict mode.');
         if (embeddingResults.some((entry) => !(entry === null || entry === void 0 ? void 0 : entry.pgVector)))
             throw new Error('Embedding generation returned missing vectors in strict mode.');
+        if (chunks.some((entry) => !String(entry.content || '').trim()))
+            throw new Error('ingestSource contains empty chunk content in strict mode.');
     }
     const rows = chunks.map((chunk, index) => ({
         subject_id: input.subjectId,

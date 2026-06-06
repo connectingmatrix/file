@@ -7,6 +7,29 @@ import type { ChunkRow } from '@connectingmatrix/orm/entities/ChunkEntity';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 const INSERT_BATCH_SIZE = 100;
+const EMBEDDING_BATCH_SIZE = 64;
+const DEFAULT_MAX_CHUNK_CHARS = 1200;
+
+type SourceChunk = ReturnType<typeof chunkText>[number];
+
+function estimateTokenCount(content: string): number {
+  return Math.max(1, Math.ceil(content.trim().length / 4));
+}
+
+function enforceChunkCharLimit(chunks: SourceChunk[], maxChunkChars: number): SourceChunk[] {
+  const output: SourceChunk[] = [];
+  for (const chunk of chunks) {
+    if (chunk.content.length <= maxChunkChars) {
+      output.push({ ...chunk, chunkIndex: output.length });
+      continue;
+    }
+    for (let start = 0; start < chunk.content.length; start += maxChunkChars) {
+      const content = chunk.content.slice(start, start + maxChunkChars).trim();
+      if (content) output.push({ chunkIndex: output.length, content, tokenCount: estimateTokenCount(content) });
+    }
+  }
+  return output;
+}
 
 function baseSourceQuery(_supabase: SupabaseClient, input: IngestSourceInput) {
   if (input.sourceKind === 'attachment' && !input.attachmentId) throw new Error('attachmentId is required for attachment chunk ingestion.');
@@ -64,7 +87,7 @@ export async function ingestSource(supabase: SupabaseClient, input: IngestSource
     attachmentId: input.attachmentId,
   });
 
-  const chunks = chunkText(content, input.chunking);
+  const chunks = enforceChunkCharLimit(chunkText(content, input.chunking), input.chunking?.maxChunkChars || DEFAULT_MAX_CHUNK_CHARS);
   if (!chunks.length) {
     if (input.strict) throw new Error('ingestSource requires non-empty chunk result in strict mode.');
     return {
@@ -80,8 +103,9 @@ export async function ingestSource(supabase: SupabaseClient, input: IngestSource
   const existing = await baseSourceQuery(supabase, input);
   const existingHashes = new Set(existing.map((row) => String(row.metadata?.source_hash || '')).filter(Boolean));
   const hasExistingHash = existingHashes.size === 1 && existingHashes.has(sourceHash);
+  const replaceExisting = input.replaceExisting !== false;
 
-  if (existing.length > 0 && hasExistingHash) {
+  if (existing.length > 0 && hasExistingHash && !replaceExisting) {
     if (input.strict) throw new Error('ingestSource skipped due to unchanged source content in strict mode.');
     return {
       status: 'skipped',
@@ -94,13 +118,16 @@ export async function ingestSource(supabase: SupabaseClient, input: IngestSource
   }
 
   let deletedChunks = 0;
-  const replaceExisting = input.replaceExisting !== false;
   if (replaceExisting && existing.length > 0) {
     await deleteSourceChunks(supabase, input);
     deletedChunks = existing.length;
   }
 
-  const embeddingResults = await createEmbeddings(chunks.map((chunk) => chunk.content));
+  const embeddingResults: Awaited<ReturnType<typeof createEmbeddings>> = [];
+  for (let start = 0; start < chunks.length; start += EMBEDDING_BATCH_SIZE) {
+    const batch = chunks.slice(start, start + EMBEDDING_BATCH_SIZE);
+    embeddingResults.push(...(await createEmbeddings(batch.map((chunk) => chunk.content))));
+  }
   if (input.strict) {
     if (embeddingResults.length !== chunks.length) throw new Error('Embedding generation count does not match chunk count in strict mode.');
     if (embeddingResults.some((entry) => !entry?.pgVector)) throw new Error('Embedding generation returned missing vectors in strict mode.');
