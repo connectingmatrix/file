@@ -18,9 +18,6 @@
       "@connectingmatrix/orm/*": [
         "../../giga-orm/src/*"
       ],
-      "@connectingmatrix/agents": [
-        "../../giga-agents/src/index"
-      ],
       "@connectingmatrix/agents/*": [
         "../../giga-agents/src/*"
       ],
@@ -65,12 +62,6 @@
       ],
       "@gigav2/socket/chat": [
         "../../giga-agents/src/socket/chat/index"
-      ],
-      "@gigav2/socket/core/*": [
-        "../../giga-agents/src/socket/core/*"
-      ],
-      "@gigav2/socket/core": [
-        "../../giga-agents/src/socket/core/index"
       ],
       "@gigav2/services/post/*": [
         "../../giga-file-service/src/services/post/*"
