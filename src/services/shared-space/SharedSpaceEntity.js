@@ -167,14 +167,5 @@ class SharedSpaceEntity {
         const result = await (0, file_ops_1.download)(access.root, input.url, input.path, access.remainingBytes + this.existingSize(input.path));
         return { ...result, cached: false };
     }
-    async workflowDrive(context) {
-        var _a, _b, _c;
-        const access = await this.access(context, 'read');
-        const readable = ((_a = access.permissions) === null || _a === void 0 ? void 0 : _a.allowRead) === true;
-        const writable = ((_b = access.permissions) === null || _b === void 0 ? void 0 : _b.allowCreate) === true || ((_c = access.permissions) === null || _c === void 0 ? void 0 : _c.allowUpdate) === true;
-        if (!readable && !writable)
-            return null;
-        return { access: writable ? 'readwrite' : 'read', organizationId: this.scope.kind === 'organization' ? this.scope.organizationId : null, path: this.root(), quotaBytes: access.quotaBytes, virtualPath: constants_1.DRIVE_ROOT };
-    }
 }
 exports.SharedSpaceEntity = SharedSpaceEntity;

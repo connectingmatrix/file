@@ -19,7 +19,6 @@ import { drivePath, getDriveRoot, hostPath, type DriveScope } from './path';
 import { createDriveUploadTicket, type DriveUploadPreflightResult, type DriveUploadPurpose } from './ticket';
 import { folderBytes, listFolder } from './usage';
 import type { GraphqlResolverContext } from '@gigav2/types/graphql.types';
-import type { WorkflowRuntimeSettings } from '@gigav2/types/workflow.types';
 import type { Action } from '@gigav2/types/org.types';
 
 type SharedSpaceContext = Pick<GraphqlResolverContext, 'supabase'> &
@@ -201,11 +200,4 @@ export class SharedSpaceEntity {
     return { ...result, cached: false };
   }
 
-  public async workflowDrive(context: SharedSpaceContext): Promise<WorkflowRuntimeSettings['sharedDrive']> {
-    const access = await this.access(context, 'read');
-    const readable = access.permissions?.allowRead === true;
-    const writable = access.permissions?.allowCreate === true || access.permissions?.allowUpdate === true;
-    if (!readable && !writable) return null;
-    return { access: writable ? 'readwrite' : 'read', organizationId: this.scope.kind === 'organization' ? this.scope.organizationId : null, path: this.root(), quotaBytes: access.quotaBytes, virtualPath: DRIVE_ROOT };
-  }
 }

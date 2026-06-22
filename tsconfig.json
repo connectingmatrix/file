@@ -21,12 +21,6 @@
       "@connectingmatrix/agents/*": [
         "../../giga-agents/src/*"
       ],
-      "@connectingmatrix/project": [
-        "../../giga-project/src/index"
-      ],
-      "@connectingmatrix/project/*": [
-        "../../giga-project/src/*"
-      ],
       "@connectingmatrix/file-service": [
         "../../giga-file-service/src/index"
       ],
@@ -75,32 +69,8 @@
       "@gigav2/services/shared-space": [
         "../../giga-file-service/src/services/shared-space/index"
       ],
-      "@gigav2/services/giga/tree/*": [
-        "../../giga-project/src/tree/*"
-      ],
-      "@gigav2/services/giga/tree": [
-        "../../giga-project/src/tree/index"
-      ],
-      "@gigav2/services/shared/*": [
-        "../../giga-project/src/shared/*"
-      ],
-      "@gigav2/services/shared": [
-        "../../giga-project/src/shared/index"
-      ],
-      "@gigav2/services/common/*": [
-        "../../giga-project/src/common/*"
-      ],
-      "@gigav2/services/common": [
-        "../../giga-project/src/common/index"
-      ],
       "@gigav2/*": [
         "../../giga-ai-backend/src/*"
-      ],
-      "@workflow/nodes/*": [
-        "../../workflow-nodes/src/*"
-      ],
-      "@workflow/executor": [
-        "../../giga-wf-executor/src/index"
       ]
     }
   },

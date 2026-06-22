@@ -8,3 +8,5 @@ Contracts owned here:
 - `createZipArtifactBody`: compressed artifact body creator with a manifest embedded in the archive.
 
 Runtime code must persist real storage objects and checksums before reporting artifact success.
+
+Deprecated Workflow and Workflow Node integrations are removed from this package. Do not reintroduce `services/workflow/**`, `@workflow/nodes`, `@workflow/executor`, `@connectingmatrix/project`, or workflow-node file IO exports.
